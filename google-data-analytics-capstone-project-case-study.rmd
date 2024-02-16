@@ -1,0 +1,759 @@
+---
+title: 'Google Data Analytics Capstone Project: Case Study'
+subtitle: "How does a bike-share navigate speedy success?"
+date: '`r Sys.Date()`'
+# author: 'Sanjiv Kumar'
+output:
+  html_document:
+    number_sections: true
+    fig_caption: true
+    toc: true
+    fig_width: 7
+    fig_height: 4.5
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+---
+
+```{r libraries, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+# Libraries 
+library(tidyverse)
+library(flextable) # tables
+library(fontawesome)
+library(naniar) # missing data gg_miss_var()
+library(cowplot)
+library(RColorBrewer)
+library(ggcorrplot) # correlation matrix
+library(corrr) # correlation matrix
+library(ggpie) # pie charts
+library(kableExtra) # for tables 
+library(gt)
+library(knitr) # Table
+```
+
+<!-- To justify text in the whole document  -->
+<style>
+body {
+text-align: justify}
+</style>
+
+# Welcome to my Kaggle Notebook!
+Please feel free to fork or customize this notebook to suit your needs. If you found it helpful, **please consider upvoting**. Your support helps others to discover this notebook and motivates me to undertake similar projects in the future. Special thanks to the amazing Kagglers whose work inspired this notebook!
+
+Connect with me on:
+- [LinkedIn](https://www.linkedin.com/in/sanjiv-kumar-ph-d-b246b44a/) <a href="https://www.linkedin.com/in/sanjiv-kumar-ph-d-b246b44a/"><img src="https://img.icons8.com/color/48/000000/linkedin.png" alt="LinkedIn" width="30"></a>
+- [GitHub](https://github.com/sanjiv856/) <a href="https://github.com/sanjiv856/"><img src="https://img.icons8.com/ios-filled/50/000000/github.png" alt="GitHub" width="30"></a>
+
+# Introduction  
+
+```{r figbike, eval=TRUE, echo=TRUE, out.width='40%', out.extra='style="float:right; padding:10px"', fig.align="right"}
+url <- "https://images.unsplash.com/photo-1634112204276-77b5b30954e1?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+knitr::include_graphics(url)
+```
+
+<style>
+.right-align {
+    text-align: right;
+}
+</style>
+
+Welcome to the analysis of Cyclistic's bike-share program in Chicago! It is our mission to contribute valuable insights that will drive the company’s future success. The director of marketing believes that maximizing annual memberships is crucial for growth. To achieve this goal, we aim to understand the distinct behaviors of casual riders (_Customers who purchase single-ride or full-day passes are referred to as casual riders_) and annual members. **By analyzing Cyclistic's historical bike trip data, we aim to uncover trends that inform a new marketing strategy focused on converting casual riders into loyal annual members**. Armed with compelling data insights and professional visualizations, our recommendations will be poised to secure approval from Cyclistic's detail-oriented executive team. With a majority of users opting for leisure rides and around 30% commuting daily, Cyclistic has become an integral part of Chicago's urban mobility. With over 5,800 bicycles and various assistive options, Cyclistic's offerings make bike-share more inclusive, attracting users for both leisure rides and daily commutes. Let's dive in and discover how data can drive success for Cyclistic! 
+<p class="right-align">Photo by <a href="https://unsplash.com/@nsokolov114?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Nick Sokolov</a> on <a href="https://unsplash.com/photos/a-row-of-bicycles-parked-next-to-each-other-qifHIocqFxE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a></p>
+
+# About  
+
+The data can be accessed from Divvy bicycle through this [LINK](https://divvy-tripdata.s3.amazonaws.com/index.html), and is subjected to the license provided [HERE](https://divvybikes.com/data-license-agreement). Our data analysis will adhere to the following phases: **_Ask, Prepare, Process, Analyze, Share and Act_**, ensuring a structured approach to our analysis.
+
+**Company Overview**: Cyclistic operates as a bike-sharing service in Chicago, offering a diverse fleet of bicycles for public use throughout the city. Their subscription-based model caters to both casual riders and annual members, with a commitment to providing inclusive and accessible transportation options for all.
+
+**Data Scope**: Company’s dataset comprises of a year's worth of trip records sourced from Cyclistic's archives, shedding light on usage patterns among casual riders and annual members. Key variables include trip start and end times, station details, rideable types, and user classifications.
+
+**Problem at Hand (Business Task)**: The objective is to discern usage disparities between casual riders and annual members, aiming to craft a marketing strategy that encourages casual users to transition into annual membership status. The primary task is to analyze Cyclistic's historical trip data, identifying distinct usage patterns between casual riders and annual members. These insights will inform the development of a targeted marketing strategy focused on converting casual riders into long-term members.
+
+# Ask  
+
+**Guiding questions**:
+
+_What is the problem you are trying to solve?_ The main problem we are addressing is understanding the usage disparities between casual riders and annual members of Cyclistic's bike-sharing service. This understanding will help in formulating a targeted marketing strategy aimed at converting casual users into long-term members.
+
+_How can your insights drive business decisions?_ The insights derived from analyzing Cyclistic's historical trip data will provide valuable information on how casual riders and annual members utilize the bike-sharing service differently. These insights can drive strategic business decisions by informing the development of a focused marketing campaign tailored to encourage casual users to transition into annual membership status. By understanding the behaviors and preferences of both user segments, Cyclistic can optimize its marketing efforts to increase annual memberships and improve overall business performance.
+
+**Key tasks**:  
+
+_Identify the primary business task_: Understanding usage disparities between casual riders and annual members to formulate a targeted marketing strategy aimed at converting casual users into long-term members.
+
+**Stakeholders**:
+
+**1. Lily Moreno** leads the marketing department, spearheading campaigns to bolster the bike-sharing program's visibility.  
+**2. The Cyclistic marketing analytics team** conducts data collection, analysis, and reporting to inform strategic decisions.  
+**3. Cyclistic's executive team** holds the authority to approve proposed marketing initiatives, ensuring alignment with overarching goals and objectives.
+
+**Deliverable**:  
+
+_A clear statement of the business task_: Analyze Cyclistic's historical trip data to discern usage patterns between casual riders and annual members, with the aim of developing a focused marketing campaign to encourage casual users to transition into annual membership status.
+
+# Prepare  
+
+**Guiding questions**:  
+
+**Where is your data located? How is the data organized?**  
+**_Data Location and Organization_**: The data can be accessed from Divvy bicycle through this [LINK](https://divvy-tripdata.s3.amazonaws.com/index.html). It represents the historical trip data of Cyclistic bikes and is organized into separate CSV files, each covering a month's worth of rides. The data includes details such as trip duration, start and end times, station information, bike type, and user type (casual or annual member).
+
+**Are there issues with bias or credibility in this data? Does your data ROCCC (reliable, original, comprehensive, current and cited)?**  
+**_Data Bias and Credibility_**: While the data is provided by the bike-sharing service company itself, it's important to recognize potential biases that may arise from operational constraints or data collection methods. However, it meets the criteria of ROCCC (reliable, original, comprehensive, current, and cited) and is considered credible for analysis.
+
+**How are you addressing licensing, privacy, security, and accessibility?**  
+**_Licensing, Privacy, Security, and Accessibility_**: The data is subjected to the license provided [HERE](https://divvybikes.com/data-license-agreement). The data is made available under a specific license that permits its use for analysis. It preserves privacy by excluding personally identifiable information and is stored securely.
+
+**How did you verify the data’s integrity?**  
+**_Data Integrity_**: The integrity of the data will be verified through exploratory data analysis (EDA) to identify and address any inconsistencies (i.e., missing values, outliers, or duplicate entries). The files exhibit consistent columns and data types across different time periods.
+
+**_Data Relevance to the Business Question_**: The dataset provides valuable insights into the usage patterns of Cyclistic bikes by both casual riders and annual members, directly addressing the business question of understanding user behavior differences. Analysis of the data will inform the development of a marketing strategy aimed at converting casual riders into annual members.  
+
+**_Potential Problems_**: Potential issues with the data may include missing or erroneous entries, as well as bias introduced by the sampling method. Additionally, the dataset might lack certain information, such as demographic details of riders, which could be useful for analysis. Updating information about bike stations and gathering more details about riders could enhance the analysis.
+
+**Key tasks**  
+
+**_Download the data and store it appropriately_**: Initially, the data was stored locally for RMarkdown creation and later uploaded to Kaggle before running and publishing the final notebook.
+
+**_Identify how the data organized_**: The data is structured into CSV files. CSV files (12 files) from last one year (2023-01-01 to 2023-12-31) were downloaded into the data folder and merged into one single file. First six rows of the data used for the analysis is shown in the table\ \@ref(tab:table1). Verify whether the columns are correctly interpreted for their data type. Utilize the `str()` function for this purpose. If the data is not recognized in the correct format, convert it using functions such as `as.character()`, `as.numeric()`, `as.Date()`, etc.    
+
+```{r data_cleaning, message=FALSE, warning=FALSE, echo=TRUE, eval=TRUE, include=TRUE, out.width = "100%", fig.align="center"}
+merged_files = 
+  list.files(path = "/kaggle/input/cyclistic-2023/Cyclistic_2023", pattern = "*.csv", full.names = TRUE) %>%
+  lapply(read_csv) %>%
+  bind_rows
+```
+
+```{r table1, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', out.width="100%"}
+
+merged_files %>% 
+  head() %>% 
+  flextable() %>% 
+  flextable::set_caption("First six rows of the data.") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "center") %>% 
+  align_nottext_col(align = "center")  
+```
+**_Sort and filter the data_**: Explore the dataset to grasp its structure and the meaning of each column. The table\ \@ref(tab:table2) contains a description of the dataset columns. Updated missing data for `start_station_name`, `start_station_id`, `end_station_name`, and `end_station_id` to be labeled as "unknown". Filtering involves removing data where the start time exceeds the end time and eliminating rows with missing values using `drop_na()`. Dropping rows with missing values isn't always advisable; there are alternative methods for handling them. Given the abundance of data in terms of row count, we're opting to simplify here by removing them in this instance. No duplicates were identified using `filtered_data_1 %>% group_by(ride_id) %>% filter(n()>1)` on the `ride_id` column. In case duplicates are present in the data, they can be removed using `filtered_data_1 = filtered_data_1[!duplicated(filtered_data_1$ride_id), ]`.  
+
+```{r table2, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', out.width="100%"}
+
+data.frame(Column = colnames(merged_files), 
+           Details = c("Unique IDs for every ride", 
+                       "Type of bike, electric, classic or docked", 
+                       "Started ride time", "Ended ride time", 
+                       "Name of ride starting station", 
+                       "ID of starting station",
+                       "Name of ride ending station", 
+                       "ID of ending station", 
+                       "Starting latitude", "Starting longitude",
+                       "Ending latitude", "Ending longitude",
+                       "Membership type")) %>% 
+  flextable() %>% 
+  flextable::set_caption("Description of columns in the dataset") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "left") %>% 
+  align_nottext_col(align = "center")  
+```
+
+```{r , eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', out.width="100%"}
+filtered_data_1 =
+  merged_files %>% 
+  filter(ended_at > started_at) %>% # removing rows where start time exceeds the end time
+  mutate(start_station_name = 
+           ifelse(is.na(start_station_name), 'unknown', start_station_name), 
+         start_station_id = 
+           ifelse(is.na(start_station_id), 'unknown', start_station_id), 
+         end_station_name = 
+           ifelse(is.na(end_station_name), 'unknown', end_station_name), 
+         end_station_id = 
+           ifelse(is.na(end_station_id), 'unknown', end_station_id)) %>% 
+  drop_na() # removing other rows with missing data
+```
+
+**_Determine the credibility of the data_**: The data provided for this work comes from a reputable source, ensuring its credibility. However, it's essential to consider other factors like ROCCC (reliable, original, comprehensive, current, and cited) when assessing data credibility.  
+
+**Deliverable**  
+
+**_A description of all data sources used_**: The main data source consists of riding data spanning 12 months, from January to December 2023, provided by Cyclistic company. Filtering has been applied to remove duplicates, rows with missing data, and instances where the start time exceeds the end time.       
+
+# Process   
+
+**Guiding questions**:  
+
+**What tools are you choosing and why?**
+**_Tools_**: I choose `R`, `RMarkdown`, and multiple libraries such as `tidyverse`, and `flextable` for data analysis. R provides a comprehensive environment for statistical computing and graphics, while RMarkdown allows for seamless integration of code, results, and narrative in a single document. The tidyverse package offers a suite of tools for data manipulation and visualization, streamlining the analysis process. Additionally, flextable provides flexibility in creating and formatting tables, enhancing the presentation of analytical results. These tools collectively enable efficient and reproducible data analysis workflows.   
+
+**Have you ensured your data’s integrity?**
+**_Data integrity_**: This is dealt with before in the previous sections **_Determine the credibility of the data_** and **_Data Bias and Credibility_**.  
+
+**What steps have you taken to ensure that your data is clean?**
+**_Data Cleaning_**: To ensure that the data is clean, several steps were taken as outlined in the section **_Sort and filter the data_**. Firstly, the `str()` function was used to verify if the data types in the columns are read correctly. Additionally, adjustments were made to the data by adding new columns based on calculations of existing columns. These new columns were designed to facilitate the analysis and derive more insightful conclusions. For example, new columns were added to calculate time differences between rides, determine the day of the week, hour, month, and year of each ride, as well as calculated distances. These steps contribute to enhancing the quality and usability of the dataset for the analysis.
+
+**How can you verify that your data is clean and ready to analyze?**
+Data is clean was ensured for analysis by visualizing missing data both before and after removing NAs (See Figure\ \@ref(fig:dataCleanVerify)). Detailed information can be found in the **_Data Cleaning_** and **_Sort and Filter Data_** sections. 
+
+```{r dataCleanVerify, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 6, out.width="100%", fig.cap="Number of missing values before and after NA removal. **A**. Before removing NA, **B**. After removing NA"}
+
+# Before cleaning
+a = gg_miss_var(merged_files, show_pct = TRUE) +
+  theme_classic() +
+  # scale_y_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=18, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8))) 
+
+# After cleaning 
+b = gg_miss_var(filtered_data_1, show_pct = TRUE) +
+  theme_classic() +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=18, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8))) 
+
+cowplot::plot_grid(a, b, ncol = 2, align = "h")
+```
+
+**Have you documented your cleaning process so you can review and share those results?**
+**_Data Cleaning Steps_**:   
+
+1. Verified data types using `str()`.  
+2. Updated missing data for `start_station_name`, `start_station_id`, `end_station_name`, and `end_station_id` to be labeled as `unknown`  
+3. Eliminated rows with missing values using `drop_na()`.  
+4. Filtered out rows where the end time is before the start time using `filter(ended_at > started_at)`.  
+5. Introduced new columns to:
+ + Compute time differences between rides.  
+ + Identify the weekday, hour, month, and year for each ride.  
+ + Calculate distances.  
+6. Filtered rows with trip duration greater than 24 hours
+7. Three rows with `end_lat` and `end_lng` as 0 were removed. 
+8. since most of the trip duration are less than 100 minutes, rows with trip duration greater than 100 minutes were removed (< 0.86% of the data)
+9. Code used:  
+
+```{r , eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', out.width="100%", fig.cap=""}
+
+# Adding new columns
+
+filtered_data_2 =
+  filtered_data_1 %>% 
+  mutate(trip_duration_difftime = difftime(filtered_data_1$ended_at, filtered_data_1$started_at, 
+                                           units = "mins"), 
+         starting_hour = strftime(filtered_data_1$ended_at, "%H"), # starting hour
+         weekday = strftime(filtered_data_1$ended_at, "%a"), # weekday
+         month = strftime(filtered_data_1$ended_at, "%b"), # month
+         day_of_month = strftime(filtered_data_1$ended_at, "%d")) %>% # day of the month  
+  filter(trip_duration_difftime <= 100) %>% #removed trips > 100 minutes 
+  filter(end_lat > 40, end_lng < -85) # removed end_lat & end_lng as 0
+```
+10. Newly created variables were tested for integrity by plotting (see Figure\ \@ref(fig:dataCleanVerify1)).  
+
+```{r dataCleanVerify1, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 16, out.width="100%", fig.cap="Number of missing values before and after NA removal. **A**. Distribution of trip_duration, **B**. Distribution of startng_hour, **C**. Distribution of weekday, **D**. Distribution of day_of_month, **E**. Distribution of month, **F**. Percent distribution of Casual users and Members"}
+# Examining the new columns for consistency 
+
+a = filtered_data_2 %>% 
+  ggplot(aes(trip_duration_difftime)) +
+  geom_histogram(bins = 100) +
+  labs(x = "Trip duration (minutes)", y = "Number of rides", title = "", tag = "") +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 500000, 50000), 
+                     # limits = c(0, 450000), 
+                     labels = function(x) format(x, scientific = FALSE))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+b =
+  filtered_data_2 %>% 
+  ggplot(aes(as.numeric(starting_hour))) +
+  geom_bar() +
+  labs(x = "Hour of the day", y = "Number of rides", title = "", tag = "") +
+  scale_x_continuous(breaks = seq(0, 23, 2),
+                     ) +
+  scale_y_continuous(breaks = seq(0, 1000000, 100000), 
+                     # limits = c(0, 600000), 
+                     labels = scales::number_format(accuracy = 1))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+c = filtered_data_2 %>% 
+  ggplot(aes(factor(weekday, 
+                    levels = c("Mon", "Tue", "Wed", "Thu", 
+                               "Fri", "Sat", "Sun")))) +
+  geom_bar() +
+  labs(x = "Day of the week", y = "Number of rides", title = "", tag = "") +
+  scale_y_continuous(breaks = seq(0, 1000000, 100000),
+                     labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8))) 
+
+d = filtered_data_2 %>% 
+  ggplot(aes(as.numeric(day_of_month))) +
+  geom_bar() +
+  labs(x = "Day of the month", y = "Number of rides", title = "", tag = "") +
+  scale_x_continuous(breaks = seq(1, 31, 2)) +
+  scale_y_continuous(breaks = seq(0, 1000000, 50000), 
+                     # limits = c(0, 600000), 
+                     labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=16, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+e = filtered_data_2 %>% 
+  ggplot(aes(factor(month, 
+                    levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")))) +
+  geom_bar() +
+  labs(x = "Month", y = "Number of rides", title = "", tag = "") +
+  scale_y_continuous(breaks = seq(0, 1000000, 100000), 
+                     labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=18, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+f = filtered_data_2 %>% 
+  ggplot(aes(x = "", fill=member_casual)) +
+  geom_bar(position="fill") +
+  geom_text(
+    stat='count', 
+    aes(y=after_stat(..count..),
+        label=after_stat(scales::percent(..count../sum(..count..),1))),
+    position=position_fill(0.5),
+  ) +
+  coord_polar(theta="y") +
+  labs(x=NULL, y=NULL) +
+  scale_fill_brewer(palette="Set2") +
+  theme_void() +
+  guides(fill=guide_legend(title="Membership type")) 
+
+cowplot::plot_grid(a, b, c, d, e, f, ncol = 2, align = "h")
+```
+
+# Analyze  
+
+**Guiding questions**
+
+**_How should you organize your data to perform analysis on it? Has your data been properly formatted?_** To perform analysis on the data, it is important to organize it in a structured and accessible manner. This involves formatting the data appropriately, ensuring consistency across variables, and creating a unified view of the dataset. In this case, the data has been organized into a single CSV file by concatenating all the files from the dataset. Additionally, all columns have been assigned their correct data types, indicating that the data has been properly formatted. Therefore, the data is organized effectively and has been checked to ensure that each column has the proper data type. Any inconsistencies were addressed through appropriate data formatting techniques.
+
+**_What surprises did you discover in the data?_**
+During the descriptive analysis, several surprises emerged from the data, shedding light on unexpected patterns and trends. One notable finding was the distinct differences observed between members and casual riders when analyzing weekday usage. There was a positive correlation (Figure\ \@ref(fig:correlation1)) between the _member_casual_ and weekday, which requires further analysis of categorizing weekday data into weekday and weekend to understand the difference between _members_ and _casual riders_. There was also negative correlation between _member_casual_ and _rideable_type_ indicating differences in the preferences between these two groups. Additionally, contrary to expectations, it was surprising to discover that members exhibit less riding time compared to casual riders. These unexpected insights highlight the importance of thorough data analysis in uncovering valuable information that may not be initially apparent.
+
+**_What trends or relationships did you find in the data?_**
+Several trends and relationships within the data were identified. Firstly, members tend to take more rides for a longer trip duration compared to casual bike riders. Additionally, the number of rides by members is higher throughout most hours of the day compared to casual riders, with minimal differences during off-peak hours, potentially due to limited availability of other modes of public transport. On weekends, especially Saturdays, there is a higher number of casual riders compared to the rest of the week. Trends for both member types remain consistent across any day of the month and throughout the year. The dataset contains more members compared to casual riders. Despite being relatively low, membership type exhibits the highest positive correlation with the weekday and the highest negative correlation with the type of bike, indicating some preferential differences between member types that warrant further investigation. Lastly, the persona of the casual rider appears to be more spontaneous, as evidenced by off-peak usage of bikes and increased usage on weekends compared to more regular members, suggesting they may be tourists or individuals seeking leisure activities.
+
+**_How will these insights help answer your business questions?_**
+These insights will significantly contribute to answering our main business question regarding how casual riders and annual members utilize Cyclistic bikes differently. By understanding the distinct trends and behaviors between these two user groups, we can tailor our marketing strategies, service offerings, and operational decisions to better meet their needs. For example, knowing that members tend to take longer rides and utilize bikes more consistently throughout the day can help us optimize bike availability and station placements. Additionally, recognizing the higher demand for casual riders on weekends can guide promotional efforts and pricing strategies aimed at attracting this segment during peak times. Overall, these insights provide valuable guidance for enhancing customer satisfaction, increasing ridership, and maximizing the overall success of Cyclistic.
+
+**Key tasks**   
+
+**Aggregate your data for usability and accessibility.** The data has been aggregated, organized, and formatted according to the procedures outlined in the previous sections titled **_Data Cleaning_** and **_Organize and format your data_**. A summary of the aggregated data is provided in tables (Tables \@ref(tab:summaryTable1) to \@ref(tab:summaryTable4)).
+
+**Organize and format your data.** In the Data Cleaning Steps section, various cleaning and organization steps were described. Specifically, the columns _rideable_type, start_station_id, end_station_id, member_casual, starting_hour, weekday, month, and day_of_month_ were selected to create the correlation matrix (Figure\ \@ref(fig:correlation1)).
+
+**Perform calculations.** Several plots were generated to gain insights into the data (Figure\ \@ref(fig:dataAnalysis1)). Plots were created for _rideable_type, start_station_id, end_station_id, starting_hour, weekday, month, and day_of_month_, plotting membership type _member_casual_. 
+
+```{r dataAnalysis1, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 24, fig.height = 20, out.width="100%", fig.cap="Difference between _Casual Riders_ and _Members_ across different veriable. **A**. Distribution of trip_duration, **B**. Distribution of startng_hour, **C**. Distribution of weekday, **D**. Distribution of day_of_month, **E**. Distribution of month, **F**. Type of bike."}
+# Examining the new columns for consistency 
+
+a = filtered_data_2 %>% 
+  ggplot(aes(trip_duration_difftime, fill = member_casual)) +
+  geom_histogram(bins = 100) +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  labs(x = "Trip duration (minutes)", y = "Number of rides", title = "", tag = "") +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(
+    # breaks = seq(0, 500000, 50000), 
+                     # limits = c(0, 450000), 
+                     labels = function(x) format(x, scientific = FALSE))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", # c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+b = filtered_data_2 %>% 
+  ggplot(aes(as.numeric(starting_hour), fill = member_casual)) +
+  geom_bar() +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  labs(x = "Hour of the day", y = "Number of rides", title = "", tag = "") +
+ scale_x_continuous(breaks = seq(0, 23, 2)) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 1))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", # c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+c = filtered_data_2 %>% 
+  ggplot(aes(factor(weekday, 
+                    levels = c("Mon", "Tue", "Wed", "Thu", 
+                               "Fri", "Sat", "Sun")), fill = member_casual)) +
+  geom_bar() +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  labs(x = "Day of the week", y = "Number of rides", title = "", tag = "") +
+  scale_y_continuous(labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", #c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8))) 
+
+d = filtered_data_2 %>% 
+  ggplot(aes(as.numeric(day_of_month), fill = member_casual)) +
+  geom_bar() +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  scale_fill_brewer(palette="Paired") +
+  labs(x = "Day of the month", y = "Number of rides", title = "", tag = "") +
+  scale_x_continuous(breaks = seq(1, 31, 2)) +
+  scale_y_continuous(labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", # c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+e = filtered_data_2 %>% 
+  ggplot(aes(factor(month, 
+                    levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")), 
+             fill = member_casual)) +
+  geom_bar() +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  labs(x = "Month", y = "Number of rides", title = "", tag = "") +
+  scale_y_continuous(labels = function(x) sprintf("%g", x))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=20, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", # c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+f = filtered_data_2 %>% 
+  ggplot(aes(rideable_type, fill = member_casual)) +
+  geom_bar() +
+  facet_grid(~ member_casual) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill=guide_legend(title="Membership type")) +
+  scale_fill_brewer(palette="Paired") +
+  labs(x = "Type of bike", y = "Number of rides", title = "", tag = "") +
+  scale_y_continuous(labels = scales::number_format(accuracy = 1))  +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 24), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_rect(fill = "white",
+                                        size = 0.5, linetype = "solid"), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.position = "bottom", # c(0.8, 1.0),
+        legend.text = element_text(size=rel(0.8)))
+
+cowplot::plot_grid(a, b, c, d, e, f, ncol = 2, align = "h")
+```
+
+Categorical variables were transformed into factors and then into a matrix before computing the correlation matrix using the following code. A correlation matrix was produced to assess the relationship between these columns and the membership type _member_casual_ (Figure\ \@ref(fig:correlation1)). 
+
+```{r correlation1, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 8, out.width="100%", fig.cap="Correlation matrix between different variables, to understand the effect of variables on membership type."}
+
+filtered_data_2 %>% 
+  select(rideable_type, start_station_id, end_station_id, member_casual,
+         starting_hour, weekday, month, day_of_month) %>% 
+  mutate_if(is.character,as.factor) %>% 
+  mutate(across(everything(), ~dense_rank(.))) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=5) +
+  theme(panel.grid.major = element_line(size = 0.5, color = "white"),
+        panel.grid.minor = element_line(size = 0.5, color = "white"),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(size = 0.7, color = "black"),
+        text = element_text(size = 18), 
+        axis.text = element_text(angle=0, vjust=0.5, size=22, face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        axis.ticks = element_line(size = 0.5, colour = "black"), 
+        legend.text = element_text(size=rel(0.8)))
+
+```
+
+**_Identify trends and relationships._**   
+
+Numerous patterns and connections within the data were uncovered, as outlined below:
+
+1. Generally, the number of rides for member trip duration exceeds those of casual bike riders (Figure\ \@ref(fig:dataAnalysis1)A).
+
+2. Members tend to ride more frequently throughout most hours of the day compared to casual riders. However, during off-peak hours (between 02:00 and 04:00), the disparity is minimal, possibly due to limited availability of alternative modes of transportation, prompting more casual riders to utilize bikes (Figure\ \@ref(fig:dataAnalysis1)B and table\ \@ref(tab:summaryTable1)).
+
+```{r summaryTable1, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 8, out.width="100%"}
+
+filtered_data_2 %>% 
+  group_by(starting_hour) %>% 
+  summarise(number_of_rides = length(ride_id), 
+            avg_ride_duration = mean(trip_duration_difftime), 
+            percentage = number_of_rides/nrow(filtered_data_2) * 100, 
+            member_pct = (sum(member_casual == "member") / length(ride_id)) * 100,
+            casual_pct = (sum(member_casual == "casual") / length(ride_id)) * 100,
+            member_casual_pct_diff = member_pct - casual_pct) %>% 
+  arrange(starting_hour) %>% 
+  flextable() %>% 
+  flextable::set_caption("Summary data for hour of the day (starting_hour).") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "center") %>% 
+  align_nottext_col(align = "center")  
+```
+
+3. Casual riders demonstrate a higher ride count on weekends (Saturday and Sunday) compared to weekdays, peaking on Saturdays (Figure\ \@ref(fig:dataAnalysis1)C and table\ \@ref(tab:summaryTable2)).
+
+```{r summaryTable2, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 8, out.width="100%"}
+filtered_data_2 %>% 
+  group_by(weekday) %>% 
+  summarise(number_of_rides = length(ride_id), 
+            avg_ride_duration = mean(trip_duration_difftime), 
+            percentage = number_of_rides/nrow(filtered_data_2) * 100, 
+            member_pct = (sum(member_casual == "member") / length(ride_id)) * 100,
+            casual_pct = (sum(member_casual == "casual") / length(ride_id)) * 100,
+            member_casual_pct_diff = member_pct - casual_pct) %>% 
+  arrange(match(weekday, c("Mon", "Tue", "Wed", "Thu", 
+                         "Fri", "Sat", "Sun"))) %>% 
+  flextable() %>% 
+  flextable::set_caption("Summary data for day of the week (weekday).") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "center") %>% 
+  align_nottext_col(align = "center")  
+
+```
+
+4. Trends for both member and casual riders remain consistent throughout any given day of the month (Figure\ \@ref(fig:dataAnalysis1)D and table\ \@ref(tab:summaryTable3)).
+
+```{r summaryTable3, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 8, out.width="100%"}
+filtered_data_2 %>% 
+  group_by(day_of_month) %>% 
+  summarise(number_of_rides = length(ride_id), 
+            avg_ride_duration = mean(trip_duration_difftime), 
+            percentage = number_of_rides/nrow(filtered_data_2) * 100, 
+            member_pct = (sum(member_casual == "member") / length(ride_id)) * 100,
+            casual_pct = (sum(member_casual == "casual") / length(ride_id)) * 100,
+            member_casual_pct_diff = member_pct - casual_pct) %>% 
+  arrange(desc(day_of_month)) %>% 
+  flextable() %>% 
+  flextable::set_caption("Summary data for day of the month (day_of_month).") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "center") %>% 
+  align_nottext_col(align = "center")  
+```
+
+5. Similarly, trends remain similar throughout the year for both types of riders (Figure\ \@ref(fig:dataAnalysis1)E and table\ \@ref(tab:summaryTable4)). Both types of users tend to use bike for commute or leisure more during warmer months as compared to during winters. 
+
+```{r summaryTable4, eval=TRUE, include=TRUE, echo=TRUE, fig.align="center", message=FALSE, warning=FALSE, fig.pos='H', fig.width = 16, fig.height = 8, out.width="100%"}
+filtered_data_2 %>% 
+  group_by(month) %>% 
+  summarise(number_of_rides = length(ride_id), 
+            avg_ride_duration = mean(trip_duration_difftime), 
+            percentage = number_of_rides/nrow(filtered_data_2) * 100, 
+            member_pct = (sum(member_casual == "member") / length(ride_id)) * 100,
+            casual_pct = (sum(member_casual == "casual") / length(ride_id)) * 100,
+            member_casual_pct_diff = member_pct - casual_pct) %>% 
+  arrange(match(month, c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))) %>% 
+  flextable() %>% 
+  flextable::set_caption("Summary data for the month.") %>%
+  colformat_double(digits = 2) %>%
+  theme_zebra() %>% 
+  autofit() %>% 
+  align_text_col(align = "center") %>% 
+  align_nottext_col(align = "center") 
+```
+
+6. The dataset contains a greater number of members compared to casual riders (Figure\ \@ref(fig:dataCleanVerify1)F).
+
+7. Despite being minimal, there is a notable positive correlation between membership type and weekday (0.06), and a negative correlation with the type of bike (_rideable_type_, -0.06). This suggests some nuanced differences between member types, warranting further investigation Figure (\@ref(fig:correlation1)).
+8. The behavior of casual riders appears to be more spontaneous, evident from their off-peak usage of bikes and increased activity on weekends compared to regular members. This behavior could indicate that casual riders are tourists or individuals seeking leisure activities, utilizing bikes for exploration or enjoyment within the city.
+
+**Deliverable**    
+
+**_A summary of your analysis_** The analysis delved into various facets of the dataset, revealing insightful patterns and relationships. Firstly, trends between member and casual riders were explored, highlighting that members tend to take longer trips compared to casual riders. Additionally, members exhibit higher ride frequencies throughout most hours of the day, with minimal differences observed during off-peak hours. Weekend usage patterns also differed, with casual riders showing increased activity, particularly on Saturdays. Moreover, both member and casual riders displayed consistent trends across days of the month and months of the year. The dataset predominantly comprised members over casual riders. Furthermore, subtle correlations were observed between membership type and variables such as weekday and bike type, indicating potential distinctions between member types. Lastly, the behavior of casual riders appeared more spontaneous, characterized by off-peak usage and heightened weekend activity, suggesting a leisure-oriented approach to bike usage. Overall, these findings offer valuable insights into user behavior and preferences, contributing to a comprehensive understanding of bike usage patterns.  
+
+# Share   
+
+**Guiding questions**
+
+**_Were you able to answer the question of how annual members and casual riders use Cyclistic bikes differently?_** Based on the analysis conducted, we were able to uncover significant differences in the usage patterns of annual members and casual riders of Cyclistic bikes. By examining various trends and relationships within the data, we gained valuable insights into how these two user groups interact with the bike-sharing service differently.
+
+**_What story does your data tell?_** The data reveals that annual members tend to take longer trips compared to casual riders, indicating a potentially different purpose or usage pattern for each group. Moreover, annual members exhibit higher ride frequencies throughout most hours of the day, suggesting a more structured approach to bike usage. Conversely, casual riders display increased activity during weekends, particularly on Saturdays, indicating a more leisure-oriented approach to bike usage. Additionally, both member and casual riders exhibit similar trends across days of the month and months of the year, indicating consistent usage patterns over time.
+
+**_How do your findings relate to your original question?_** Furthermore, the analysis uncovered subtle correlations between membership type and variables such as weekday and bike type. These correlations suggest potential differences in preferences and behaviors between annual members and casual riders, highlighting the need for further investigation.  
+
+Overall, our findings provide valuable insights into the differences in bike usage between annual members and casual riders, which directly addresses our primary business question. By understanding these usage patterns and preferences, we can tailor marketing strategies and service offerings more effectively to meet the unique needs of each user group, ultimately driving business growth and improving customer satisfaction.
+
+**_Who is your audience? What is the best way to communicate with them?_**
+Based on the stakeholders identified, our primary audience includes Lily Moreno, who leads the marketing department, the Cyclistic marketing analytics team, and Cyclistic's executive team. To effectively communicate our findings to them, we should tailor our communication style to be concise, informative, and data-driven. Presenting key insights in a clear and visually appealing manner would be ideal, as it allows for easier comprehension and decision-making.
+
+**_Can data visualization help you share your findings?_** Data visualization plays a crucial role in sharing our findings with stakeholders. Visual representations such as charts, graphs, and tables can help convey complex information in a more accessible and understandable format. By using data visualization techniques, we can highlight trends, patterns, and correlations within the data, making it easier for stakeholders to grasp the key takeaways from our analysis.
+
+**_Is your presentation accessible to your audience?_** In terms of accessibility, it's important to ensure that our presentation is easily understandable to all stakeholders, regardless of their level of expertise in data analysis. This can be achieved by providing clear explanations of the data and the methodology used for analysis, as well as offering opportunities for stakeholders to ask questions or seek clarification on any aspects they may find challenging to understand. Additionally, providing supplementary materials such as summaries or executive briefs can further enhance accessibility and facilitate better decision-making.
+
+**Key tasks**
+
+**_Determine the best way to share your findings._** To effectively share our findings, we will determine the best communication approach based on our audience, which includes Lily Moreno, the Cyclistic marketing analytics team, and Cyclistic's executive team. Utilizing concise, informative, and data-driven communication styles will be essential.
+
+**_Create effective data visualizations._**In creating effective data visualizations, we will employ charts, graphs, and tables to represent complex information in an accessible format. These visualizations will highlight trends, patterns, and correlations within the data, aiding comprehension and decision-making.
+
+**_Present your findings_** During the presentation, we will deliver key insights clearly and concisely, providing explanations of the data and analysis methodology used. We will encourage stakeholder engagement by allowing time for questions and discussions.
+
+**_Ensure your work is accessible._** To ensure accessibility, we will make our work easily understandable to stakeholders of all levels of expertise. Clear explanations and supplementary materials, such as summaries or executive briefs, will be provided to facilitate comprehension and decision-making. Additionally, we will offer opportunities for stakeholders to seek clarification on any aspects they may find challenging to understand.
+
+**Deliverable**
+
+**_Supporting visualizations and key findings_** Our supporting visualizations and key findings offer a comprehensive overview of the differences in bike usage patterns between annual members and casual riders at Cyclistic. Through clear and insightful visualizations, we highlight significant trends, such as trip duration, ride frequency, and usage patterns across different days and times. Key findings include the observation that annual members tend to take longer trips and exhibit higher ride frequencies during weekdays, suggesting a more structured usage pattern. In contrast, casual riders show increased activity on weekends, particularly on Saturdays, indicating a more leisure-oriented approach. Additionally, our analysis uncovers subtle correlations between membership type and variables such as weekday and bike type, providing valuable insights for strategic decision-making. These visualizations and findings serve as a foundation for tailoring marketing strategies and service offerings to meet the unique needs of each user group, ultimately driving business growth and enhancing customer satisfaction.
+
+# Act  
+
+**Guiding questions**
+
+**_What is your final conclusion based on your analysis?_** Based on our analysis, the final conclusion is that there are significant differences in bike usage patterns between annual members and casual riders at Cyclistic. Annual members tend to take longer trips and exhibit higher ride frequencies during weekdays, while casual riders show increased activity on weekends. Subtle correlations between membership type and variables such as weekday and bike type were also uncovered, indicating potential differences in preferences and behaviors between the two user groups.
+
+**_How could your team and business apply your insights?_** Our team and business could apply these insights by tailoring marketing strategies and service offerings to better meet the unique needs of each user group. For example, we could develop targeted promotions or incentives to encourage weekday usage among annual members, while focusing on weekend promotions to attract casual riders. Additionally, understanding the preferences of each user group could inform decisions about bike availability, station locations, and fleet management to optimize the user experience.
+
+**_What next steps would you or your stakeholders take based on your findings?_** Based on our findings, the next steps for our team and stakeholders would involve further analysis to explore the underlying factors driving the observed differences in bike usage patterns. This could include conducting surveys or interviews with users to gain deeper insights into their motivations and preferences. Additionally, ongoing monitoring and analysis of user behavior could help identify emerging trends and inform continuous improvement efforts to enhance the Cyclistic bike-sharing service.
+
+**_Is there additional data you could use to expand on your findings?_** There is potential to use additional data to expand on our findings. For example, incorporating demographic information about Cyclistic users, such as age, gender, and location, could provide further insights into the preferences and behaviors of different user segments. Additionally, collecting data on user feedback, satisfaction levels, and reasons for bike usage could offer valuable qualitative insights to complement our quantitative analysis. Furthermore, integrating external data sources such as weather data, local events, or transportation infrastructure data could help identify external factors influencing bike usage patterns and inform more robust predictive models. By leveraging these additional data sources, we can enhance the depth and accuracy of our analysis and derive more actionable insights to drive business decisions at Cyclistic.
+
+**Key tasks**
+
+**Deliverable**
+
+**_Your top three recommendations based on your analysis_** Based on the analysis conducted, my top three recommendations are as follows:
+
+1.	Tailor Marketing Strategies: Develop targeted marketing campaigns and promotions that align with the usage patterns and preferences of annual members and casual riders. For instance, focus on promoting longer-term memberships to casual riders who exhibit frequent weekend usage patterns.
+
+2.	Enhance Service Offerings: Adjust service offerings and amenities based on the differing needs and behaviors of annual members and casual riders. For example, consider expanding docked bike availability in areas frequented by annual members who prefer structured schedules.
+
+3.	Improve User Experience: Implement user experience enhancements, such as intuitive app features or personalized recommendations, to cater to the diverse preferences of Cyclistic bike users. For instance, provide tailored route suggestions or incentives to encourage longer rides for annual members seeking extended leisure experiences.
+
+By implementing these recommendations, Cyclistic can better meet the needs of its diverse user base, drive customer engagement, and ultimately increase user satisfaction and retention.
+
+# **Additional Comments**  
+
+The dataset currently lacks information on potential customers who could potentially become either casual or regular members. Expanding the dataset to include such information would be beneficial. The marketing team could initiate brand awareness campaigns to expand the customer base. Given that there are already more regular members than casual riders, the company should aim to convert casual riders into regular members while also attracting new customers, both casual and regular. However, it's important to acknowledge that converting all casual riders into regular members may not always be feasible. Launching targeted campaigns during holidays, summer months, and in areas with high tourist traffic could help attract new customers. Offering special discounts aimed at non-users and casual riders would not only increase brand awareness but also expand the customer base.
+
+# **Thank you**   
+
+Thank you for taking the time to review this report. Your feedback and suggestions for improving the analysis are highly appreciated. If you found the notebook helpful and informative, **please consider upvoting**. Your support is invaluable. 

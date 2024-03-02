@@ -1,3 +1,4 @@
+# %% [code]
 ---
 title: 'Google Data Analytics Capstone Project: Case Study'
 subtitle: "How does a bike-share navigate speedy success?"
@@ -750,10 +751,10 @@ Based on the stakeholders identified, our primary audience includes Lily Moreno,
 
 By implementing these recommendations, Cyclistic can better meet the needs of its diverse user base, drive customer engagement, and ultimately increase user satisfaction and retention.
 
-# **Additional Comments**  
+# Additional Comments  
 
 The dataset currently lacks information on potential customers who could potentially become either casual or regular members. Expanding the dataset to include such information would be beneficial. The marketing team could initiate brand awareness campaigns to expand the customer base. Given that there are already more regular members than casual riders, the company should aim to convert casual riders into regular members while also attracting new customers, both casual and regular. However, it's important to acknowledge that converting all casual riders into regular members may not always be feasible. Launching targeted campaigns during holidays, summer months, and in areas with high tourist traffic could help attract new customers. Offering special discounts aimed at non-users and casual riders would not only increase brand awareness but also expand the customer base.
 
-# **Thank you**   
+# Thank you   
 
 Thank you for taking the time to review this report. Your feedback and suggestions for improving the analysis are highly appreciated. If you found the notebook helpful and informative, **please consider upvoting**. Your support is invaluable. 
